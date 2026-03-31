@@ -59,6 +59,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <h1>FitAI Studio</h1>
     <p>Fotos profissionais para sua loja em segundos</p>
   </div>
+
   <div class="step">
     <div class="step-label">Passo 1</div>
     <h2>Foto da peça</h2>
@@ -69,6 +70,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
     <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleUpload(event)">
   </div>
+
   <div class="step">
     <div class="step-label">Passo 2</div>
     <h2>Perfil do modelo</h2>
@@ -94,16 +96,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="option-btn" onclick="sel(this,'e')"><span class="dot"></span>Ao ar livre</button>
     </div>
   </div>
+
   <button class="generate-btn" id="gen-btn" onclick="generate()">✨ Gerar 4 fotos</button>
+
   <div class="step results" id="results">
     <div id="loading-wrap" class="loading-wrap">
       <div class="spinner"></div>
       <div class="loading-text">A IA está gerando suas fotos...</div>
-      <div class="loading-sub">Isso pode levar até 30 segundos</div>
+      <div class="loading-sub">Pode levar até 1 minuto</div>
     </div>
-    <div id="error-wrap" style="display:none" class="error-box">
-      Erro ao gerar as fotos. Tente novamente.
-    </div>
+    <div id="error-wrap" style="display:none" class="error-box"></div>
     <div id="results-content" style="display:none">
       <div class="step-label">Passo 3</div>
       <h2 style="margin-bottom:12px">Escolha a melhor <span class="badge">4 geradas</span></h2>
@@ -117,8 +119,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="download-btn" onclick="download()">⬇️ Baixar foto selecionada</button>
     </div>
   </div>
-  <div class="powered">FitAI Studio · powered by IA · v0.2</div>
+
+  <div class="powered">FitAI Studio · powered by IA · v0.3</div>
 </div>
+
 <script>
 let uploadedImageBase64 = null;
 let selectedImageUrl = null;
@@ -153,45 +157,34 @@ function selFormat(btn) {
   btn.classList.add('selected');
 }
 
-function getSelected(group) {
-  const btns = document.querySelectorAll('.' + group);
-  for (const b of btns) {
-    if (b.classList.contains('selected')) return b.textContent.trim();
-  }
-  return '';
-}
-
 async function generate() {
   if (!uploadedImageBase64) {
     alert('Por favor, adicione a foto da peça primeiro!');
     return;
   }
 
-  const results = document.getElementById('results');
+  const resultsEl = document.getElementById('results');
   const loading = document.getElementById('loading-wrap');
   const content = document.getElementById('results-content');
   const errorWrap = document.getElementById('error-wrap');
   const btn = document.getElementById('gen-btn');
   const grid = document.getElementById('results-grid');
 
-  results.classList.add('visible');
+  resultsEl.classList.add('visible');
   loading.style.display = 'block';
   content.style.display = 'none';
   errorWrap.style.display = 'none';
   btn.disabled = true;
   btn.textContent = 'Gerando...';
-  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   try {
-    const generos = document.querySelectorAll('.options-grid')[0];
-    const peles = document.querySelectorAll('.options-grid')[1];
-    const estilos = document.querySelectorAll('.options-grid')[2];
+    const genero = document.querySelectorAll('.options-grid')[0].querySelector('.selected')?.textContent.trim() || 'Feminino';
+    const pele = document.querySelectorAll('.options-grid')[1].querySelector('.selected')?.textContent.trim() || 'Claro';
+    const estilo = document.querySelectorAll('.options-grid')[2].querySelector('.selected')?.textContent.trim() || 'Fundo branco';
 
-    const genero = generos.querySelector('.selected')?.textContent.trim() || 'Feminino';
-    const pele = peles.querySelector('.selected')?.textContent.trim() || 'Claro';
-    const estilo = estilos.querySelector('.selected')?.textContent.trim() || 'Fundo branco';
-
-    const promises = [0,1,2,3].map(i =>
+    const seeds = [42, 123, 456, 789];
+    const predictions = await Promise.all(seeds.map(seed =>
       fetch('/api/tryon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -200,21 +193,43 @@ async function generate() {
           modelType: genero,
           skinTone: pele,
           style: estilo,
-          seed: i
+          seed
         })
       }).then(r => r.json())
-    );
+    ));
 
-    const results_data = await Promise.all(promises);
+    const ids = predictions.map(p => p.id);
+    const finalResults = new Array(4).fill(null);
+    let pending = ids.map((id, i) => ({ id, index: i }));
+
+    while (pending.length > 0) {
+      await new Promise(r => setTimeout(r, 3000));
+      const next = [];
+      for (const { id, index } of pending) {
+        const res = await fetch('/api/tryon?id=' + id);
+        const data = await res.json();
+        if (data.status === 'succeeded') {
+          finalResults[index] = data.output?.[0] || null;
+        } else if (data.status === 'failed') {
+          finalResults[index] = null;
+        } else {
+          next.push({ id, index });
+        }
+      }
+      pending = next;
+    }
 
     grid.innerHTML = '';
-    results_data.forEach((data, i) => {
-      const url = data.images?.[0] || '';
+    finalResults.forEach((url, i) => {
       const card = document.createElement('div');
       card.className = 'result-card' + (i === 0 ? ' selected' : '');
-      card.innerHTML = '<img src="' + url + '" alt="Variação ' + (i+1) + '"><div class="result-label">Variação ' + (i+1) + '</div>';
-      card.onclick = () => selResult(card, url);
-      if (i === 0) selectedImageUrl = url;
+      if (url) {
+        card.innerHTML = '<img src="' + url + '" alt="Variação ' + (i+1) + '"><div class="result-label">Variação ' + (i+1) + '</div>';
+        card.onclick = () => selResult(card, url);
+        if (i === 0) selectedImageUrl = url;
+      } else {
+        card.innerHTML = '<div style="height:160px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#aaa;">Falhou</div><div class="result-label">Variação ' + (i+1) + '</div>';
+      }
       grid.appendChild(card);
     });
 
@@ -224,6 +239,7 @@ async function generate() {
   } catch (err) {
     loading.style.display = 'none';
     errorWrap.style.display = 'block';
+    errorWrap.textContent = 'Erro: ' + err.message;
   }
 
   btn.disabled = false;
