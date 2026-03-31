@@ -18,7 +18,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .upload-area:hover { background: #f0f0f0; }
 .upload-area.has-image { padding: 0; border-style: solid; border-color: #1D9E75; overflow: hidden; }
 .upload-area img { width: 100%; height: 200px; object-fit: cover; display: block; }
-.upload-icon { font-size: 28px; margin-bottom: 8px; color: #ccc; }
+.upload-icon { font-size: 28px; margin-bottom: 8px; }
 .upload-text { font-size: 14px; color: #666; }
 .upload-sub { font-size: 11px; color: #aaa; margin-top: 4px; }
 .section-label { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; margin-top: 14px; }
@@ -27,7 +27,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .option-btn:hover { border-color: #1D9E75; color: #0F6E56; }
 .option-btn.selected { border-color: #1D9E75; background: #E1F5EE; color: #0F6E56; font-weight: 500; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-.generate-btn { width: 100%; padding: 15px; background: #1D9E75; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.15s; margin-top: 4px; letter-spacing: -0.2px; }
+.generate-btn { width: 100%; padding: 15px; background: #1D9E75; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
 .generate-btn:hover { background: #0F6E56; }
 .generate-btn:disabled { background: #ccc; cursor: not-allowed; }
 .results { display: none; }
@@ -41,14 +41,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .formats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
 .format-btn { padding: 10px 8px; border: 1px solid #eee; border-radius: 10px; background: white; font-size: 12px; color: #666; cursor: pointer; text-align: center; transition: all 0.15s; }
 .format-btn:hover, .format-btn.selected { border-color: #1D9E75; color: #0F6E56; background: #E1F5EE; }
-.format-icon { font-size: 18px; margin-bottom: 2px; }
 .download-btn { width: 100%; padding: 13px; background: #f5f5f3; color: #111; border: 1px solid #eee; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .download-btn:hover { background: #eee; }
 .loading-wrap { text-align: center; padding: 2rem; }
 .spinner { width: 36px; height: 36px; border: 3px solid #eee; border-top-color: #1D9E75; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { font-size: 13px; color: #888; }
+.loading-sub { font-size: 11px; color: #bbb; margin-top: 4px; }
 .badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 20px; margin-left: 8px; background: #E1F5EE; color: #0F6E56; font-weight: 500; }
+.error-box { background: #fff0f0; border: 1px solid #ffdddd; border-radius: 12px; padding: 1rem; text-align: center; font-size: 13px; color: #c00; margin-bottom: 1rem; }
 .powered { text-align: center; font-size: 11px; color: #ccc; padding: 0.5rem 0 1.5rem; }
 </style>
 </head>
@@ -60,7 +61,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   </div>
   <div class="step">
     <div class="step-label">Passo 1</div>
-    <h2>Foto da peca</h2>
+    <h2>Foto da peça</h2>
     <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
       <div class="upload-icon">📷</div>
       <div class="upload-text">Toque para adicionar a foto da roupa</div>
@@ -71,7 +72,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="step">
     <div class="step-label">Passo 2</div>
     <h2>Perfil do modelo</h2>
-    <div class="section-label">Genero</div>
+    <div class="section-label">Gênero</div>
     <div class="options-grid">
       <button class="option-btn selected" onclick="sel(this,'g')"><span class="dot"></span>Feminino</button>
       <button class="option-btn" onclick="sel(this,'g')"><span class="dot"></span>Masculino</button>
@@ -81,7 +82,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="section-label">Tom de pele</div>
     <div class="options-grid">
       <button class="option-btn selected" onclick="sel(this,'p')"><span class="dot"></span>Claro</button>
-      <button class="option-btn" onclick="sel(this,'p')"><span class="dot"></span>Medio</button>
+      <button class="option-btn" onclick="sel(this,'p')"><span class="dot"></span>Médio</button>
       <button class="option-btn" onclick="sel(this,'p')"><span class="dot"></span>Moreno</button>
       <button class="option-btn" onclick="sel(this,'p')"><span class="dot"></span>Negro</button>
     </div>
@@ -97,82 +98,145 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="step results" id="results">
     <div id="loading-wrap" class="loading-wrap">
       <div class="spinner"></div>
-      <div class="loading-text">A IA esta gerando suas fotos...</div>
+      <div class="loading-text">A IA está gerando suas fotos...</div>
+      <div class="loading-sub">Isso pode levar até 30 segundos</div>
+    </div>
+    <div id="error-wrap" style="display:none" class="error-box">
+      Erro ao gerar as fotos. Tente novamente.
     </div>
     <div id="results-content" style="display:none">
       <div class="step-label">Passo 3</div>
       <h2 style="margin-bottom:12px">Escolha a melhor <span class="badge">4 geradas</span></h2>
-      <div class="results-grid">
-        <div class="result-card selected" onclick="selResult(this)">
-          <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&h=400&fit=crop&crop=top" alt="Variacao 1">
-          <div class="result-label">Variacao 1</div>
-        </div>
-        <div class="result-card" onclick="selResult(this)">
-          <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=300&h=400&fit=crop&crop=top" alt="Variacao 2">
-          <div class="result-label">Variacao 2</div>
-        </div>
-        <div class="result-card" onclick="selResult(this)">
-          <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=300&h=400&fit=crop&crop=top" alt="Variacao 3">
-          <div class="result-label">Variacao 3</div>
-        </div>
-        <div class="result-card" onclick="selResult(this)">
-          <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&h=400&fit=crop&crop=top" alt="Variacao 4">
-          <div class="result-label">Variacao 4</div>
-        </div>
-      </div>
+      <div class="results-grid" id="results-grid"></div>
       <div class="section-label">Formato para download</div>
       <div class="formats">
-        <div class="format-btn selected" onclick="selFormat(this)"><div class="format-icon">▪️</div>Feed 1:1</div>
-        <div class="format-btn" onclick="selFormat(this)"><div class="format-icon">▮</div>Stories 9:16</div>
-        <div class="format-btn" onclick="selFormat(this)"><div class="format-icon">▬</div>Banner 16:9</div>
+        <div class="format-btn selected" onclick="selFormat(this)">Feed 1:1</div>
+        <div class="format-btn" onclick="selFormat(this)">Stories 9:16</div>
+        <div class="format-btn" onclick="selFormat(this)">Banner 16:9</div>
       </div>
-      <button class="download-btn">⬇️ Baixar foto selecionada</button>
+      <button class="download-btn" onclick="download()">⬇️ Baixar foto selecionada</button>
     </div>
   </div>
-  <div class="powered">FitAI Studio · powered by IA · v0.1</div>
+  <div class="powered">FitAI Studio · powered by IA · v0.2</div>
 </div>
 <script>
+let uploadedImageBase64 = null;
+let selectedImageUrl = null;
+
 function handleUpload(e) {
-  var file = e.target.files[0];
+  const file = e.target.files[0];
   if (!file) return;
-  var reader = new FileReader();
+  const reader = new FileReader();
   reader.onload = function(ev) {
-    var area = document.getElementById('upload-area');
+    uploadedImageBase64 = ev.target.result;
+    const area = document.getElementById('upload-area');
     area.classList.add('has-image');
-    area.innerHTML = '<img src="' + ev.target.result + '" alt="Peca">';
+    area.innerHTML = '<img src="' + ev.target.result + '" alt="Peça">';
   };
   reader.readAsDataURL(file);
 }
+
 function sel(btn, group) {
-  var parent = btn.closest('.options-grid');
-  parent.querySelectorAll('.option-btn').forEach(function(b) { b.classList.remove('selected'); });
+  const parent = btn.closest('.options-grid');
+  parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
 }
-function selResult(card) {
-  document.querySelectorAll('.result-card').forEach(function(c) { c.classList.remove('selected'); });
+
+function selResult(card, url) {
+  document.querySelectorAll('.result-card').forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
+  selectedImageUrl = url;
 }
+
 function selFormat(btn) {
-  document.querySelectorAll('.format-btn').forEach(function(b) { b.classList.remove('selected'); });
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
 }
-function generate() {
-  var results = document.getElementById('results');
-  var loading = document.getElementById('loading-wrap');
-  var content = document.getElementById('results-content');
-  var btn = document.getElementById('gen-btn');
+
+function getSelected(group) {
+  const btns = document.querySelectorAll('.' + group);
+  for (const b of btns) {
+    if (b.classList.contains('selected')) return b.textContent.trim();
+  }
+  return '';
+}
+
+async function generate() {
+  if (!uploadedImageBase64) {
+    alert('Por favor, adicione a foto da peça primeiro!');
+    return;
+  }
+
+  const results = document.getElementById('results');
+  const loading = document.getElementById('loading-wrap');
+  const content = document.getElementById('results-content');
+  const errorWrap = document.getElementById('error-wrap');
+  const btn = document.getElementById('gen-btn');
+  const grid = document.getElementById('results-grid');
+
   results.classList.add('visible');
   loading.style.display = 'block';
   content.style.display = 'none';
+  errorWrap.style.display = 'none';
   btn.disabled = true;
   btn.textContent = 'Gerando...';
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  setTimeout(function() {
+
+  try {
+    const generos = document.querySelectorAll('.options-grid')[0];
+    const peles = document.querySelectorAll('.options-grid')[1];
+    const estilos = document.querySelectorAll('.options-grid')[2];
+
+    const genero = generos.querySelector('.selected')?.textContent.trim() || 'Feminino';
+    const pele = peles.querySelector('.selected')?.textContent.trim() || 'Claro';
+    const estilo = estilos.querySelector('.selected')?.textContent.trim() || 'Fundo branco';
+
+    const promises = [0,1,2,3].map(i =>
+      fetch('/api/tryon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clothingImage: uploadedImageBase64,
+          modelType: genero,
+          skinTone: pele,
+          style: estilo,
+          seed: i
+        })
+      }).then(r => r.json())
+    );
+
+    const results_data = await Promise.all(promises);
+
+    grid.innerHTML = '';
+    results_data.forEach((data, i) => {
+      const url = data.images?.[0] || '';
+      const card = document.createElement('div');
+      card.className = 'result-card' + (i === 0 ? ' selected' : '');
+      card.innerHTML = '<img src="' + url + '" alt="Variação ' + (i+1) + '"><div class="result-label">Variação ' + (i+1) + '</div>';
+      card.onclick = () => selResult(card, url);
+      if (i === 0) selectedImageUrl = url;
+      grid.appendChild(card);
+    });
+
     loading.style.display = 'none';
     content.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Gerar novamente';
-  }, 3000);
+
+  } catch (err) {
+    loading.style.display = 'none';
+    errorWrap.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✨ Gerar novamente';
+}
+
+function download() {
+  if (!selectedImageUrl) return;
+  const a = document.createElement('a');
+  a.href = selectedImageUrl;
+  a.download = 'fitai-foto.jpg';
+  a.target = '_blank';
+  a.click();
 }
 </script>
 </body>
