@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitAI Studio</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f8f6; min-height: 100vh; }
+.app { max-width: 480px; margin: 0 auto; padding: 1rem; }
+.header { text-align: center; padding: 1.5rem 0 1rem; }
+.header h1 { font-size: 26px; font-weight: 600; color: #111; letter-spacing: -0.5px; }
+.header p { font-size: 13px; color: #888; margin-top: 4px; }
+.step { background: white; border: 1px solid #eee; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; }
+.step-label { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+.step h2 { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 12px; }
+.upload-area { border: 1.5px dashed #ddd; border-radius: 12px; padding: 2rem 1rem; text-align: center; cursor: pointer; background: #fafafa; transition: background 0.15s; }
+.upload-area:hover { background: #f0f0f0; }
+.upload-area.has-image { padding: 0; border-style: solid; border-color: #1D9E75; overflow: hidden; }
+.upload-area img { width: 100%; height: 200px; object-fit: cover; display: block; }
+.upload-icon { font-size: 28px; margin-bottom: 8px; color: #ccc; }
+.upload-text { font-size: 14px; color: #666; }
+.upload-sub { font-size: 11px; color: #aaa; margin-top: 4px; }
+.section-label { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; margin-top: 14px; }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.option-btn { padding: 10px 12px; border: 1px solid #eee; border-radius: 10px; background: white; font-size: 13px; color: #666; cursor: pointer; text-align: left; transition: all 0.15s; display: flex; align-items: center; gap: 8px; }
+.option-btn:hover { border-color: #1D9E75; color: #0F6E56; }
+.option-btn.selected { border-color: #1D9E75; background: #E1F5EE; color: #0F6E56; font-weight: 500; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.generate-btn { width: 100%; padding: 15px; background: #1D9E75; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.15s; margin-top: 4px; letter-spacing: -0.2px; }
+.generate-btn:hover { background: #0F6E56; }
+.generate-btn:disabled { background: #ccc; cursor: not-allowed; }
+.results { display: none; }
+.results.visible { display: block; }
+.results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+.result-card { border: 1px solid #eee; border-radius: 12px; overflow: hidden; background: #fafafa; cursor: pointer; transition: border-color 0.15s; }
+.result-card:hover { border-color: #1D9E75; }
+.result-card.selected { border: 2px solid #1D9E75; }
+.result-card img { width: 100%; height: 160px; object-fit: cover; display: block; }
+.result-label { font-size: 11px; color: #888; padding: 6px 8px; }
+.formats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+.format-btn { padding: 10px 8px; border: 1px solid #eee; border-radius: 10px; background: white; font-size: 12px; color: #666; cursor: pointer; text-align: center; transition: all 0.15s; }
+.format-btn:hover, .format-btn.selected { border-color: #1D9E75; color: #0F6E56; background: #E1F5EE; }
+.format-icon { font-size: 18px; margin-bottom: 2px; }
+.download-btn { width: 100%; padding: 13px; background: #f5f5f3; color: #111; border: 1px solid #eee; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.download-btn:hover { background: #eee; }
+.loading-wrap { text-align: center; padding: 2rem; }
+.spinner { width: 36px; height: 36px; border: 3px solid #eee; border-top-color: #1D9E75; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 13px; color: #888; }
+.badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 20px; margin-left: 8px; background: #E1F5EE; color: #0F6E56; font-weight: 500; }
+.powered { text-align: center; font-size: 11px; color: #ccc; padding: 0.5rem 0 1.5rem; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>FitAI Studio</h1>
+    <p>Fotos profissionais para sua loja em segundos</p>
+  </div>
+  <div class="step">
+    <div class="step-label">Passo 1</div>
+    <h2>Foto da peca</h2>
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+      <div class="upload-icon">📷</div>
+      <div class="upload-text">Toque para adicionar a foto da roupa</div>
+      <div class="upload-sub">JPG ou PNG · fundo branco ou neutro</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleUpload(event)">
+  </div>
+  <div class="step">
+    <div class="step-label">Passo 2</div>
+    <h2>Perfil do modelo</h2>
+    <div class="section-label">Genero</div>
+    <div class="options-grid">
+      <button class="option-btn selected" onclick="sel(this,'g')"><span class="dot"></span>Feminino</button>
+      <button class="option-btn" onclick="sel(this,'g')"><span class="dot"></span>Masculino</button>
+      <button class="option-btn" onclick="sel(this,'g')"><span class="dot"></span>Infantil</button>
+      <button class="option-btn" onclick="sel(this,'g')"><span class="dot"></span>Plus size</button>
+    </div>
+    <div class="section-label">Tom de pele</div>
+    <div class="options-grid">
+      <button class="option-btn selected" onclick="sel(this,'p')"><span class="dot"></span>Claro</button>
+      <button class="option-btn" onclick="sel(this,'p')"><span class="dot"></span>Medio</button>
+      <button class="option-btn" onclick="sel(this,'p')"><span class="dot"></span>Moreno</button>
+      <button class="option-btn" onclick="sel(this,'p')"><span class="dot"></span>Negro</button>
+    </div>
+    <div class="section-label">Estilo da foto</div>
+    <div class="options-grid">
+      <button class="option-btn selected" onclick="sel(this,'e')"><span class="dot"></span>Fundo branco</button>
+      <button class="option-btn" onclick="sel(this,'e')"><span class="dot"></span>Lifestyle</button>
+      <button class="option-btn" onclick="sel(this,'e')"><span class="dot"></span>Editorial</button>
+      <button class="option-btn" onclick="sel(this,'e')"><span class="dot"></span>Ao ar livre</button>
+    </div>
+  </div>
+  <button class="generate-btn" id="gen-btn" onclick="generate()">✨ Gerar 4 fotos</button>
+  <div class="step results" id="results">
+    <div id="loading-wrap" class="loading-wrap">
+      <div class="spinner"></div>
+      <div class="loading-text">A IA esta gerando suas fotos...</div>
+    </div>
+    <div id="results-content" style="display:none">
+      <div class="step-label">Passo 3</div>
+      <h2 style="margin-bottom:12px">Escolha a melhor <span class="badge">4 geradas</span></h2>
+      <div class="results-grid">
+        <div class="result-card selected" onclick="selResult(this)">
+          <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&h=400&fit=crop&crop=top" alt="Variacao 1">
+          <div class="result-label">Variacao 1</div>
+        </div>
+        <div class="result-card" onclick="selResult(this)">
+          <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=300&h=400&fit=crop&crop=top" alt="Variacao 2">
+          <div class="result-label">Variacao 2</div>
+        </div>
+        <div class="result-card" onclick="selResult(this)">
+          <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=300&h=400&fit=crop&crop=top" alt="Variacao 3">
+          <div class="result-label">Variacao 3</div>
+        </div>
+        <div class="result-card" onclick="selResult(this)">
+          <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&h=400&fit=crop&crop=top" alt="Variacao 4">
+          <div class="result-label">Variacao 4</div>
+        </div>
+      </div>
+      <div class="section-label">Formato para download</div>
+      <div class="formats">
+        <div class="format-btn selected" onclick="selFormat(this)"><div class="format-icon">▪️</div>Feed 1:1</div>
+        <div class="format-btn" onclick="selFormat(this)"><div class="format-icon">▮</div>Stories 9:16</div>
+        <div class="format-btn" onclick="selFormat(this)"><div class="format-icon">▬</div>Banner 16:9</div>
+      </div>
+      <button class="download-btn">⬇️ Baixar foto selecionada</button>
+    </div>
+  </div>
+  <div class="powered">FitAI Studio · powered by IA · v0.1</div>
+</div>
+<script>
+function handleUpload(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var area = document.getElementById('upload-area');
+    area.classList.add('has-image');
+    area.innerHTML = '<img src="' + ev.target.result + '" alt="Peca">';
+  };
+  reader.readAsDataURL(file);
+}
+function sel(btn, group) {
+  var parent = btn.closest('.options-grid');
+  parent.querySelectorAll('.option-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+function selResult(card) {
+  document.querySelectorAll('.result-card').forEach(function(c) { c.classList.remove('selected'); });
+  card.classList.add('selected');
+}
+function selFormat(btn) {
+  document.querySelectorAll('.format-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+function generate() {
+  var results = document.getElementById('results');
+  var loading = document.getElementById('loading-wrap');
+  var content = document.getElementById('results-content');
+  var btn = document.getElementById('gen-btn');
+  results.classList.add('visible');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Gerando...';
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(function() {
+    loading.style.display = 'none';
+    content.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Gerar novamente';
+  }, 3000);
+}
+</script>
+</body>
+</html>
